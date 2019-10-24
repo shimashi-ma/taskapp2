@@ -14,22 +14,14 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     
+    
     //検索ボタンをクリック（タップ）した時
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
         // キーボードを閉じる
         view.endEditing(true)
-        
-        if let searchWord = searchBar.text {
-            //デバックエリアに出力
-            print(searchWord)
-            //条件検索　入力された文字とカテゴリ名が一致しているものを取り出す
-            let categoryArray = try! Realm().objects(Task.self).filter("category == 'searchWord'")
-            print(categoryArray)
-            
-        }
     }
     
-
+    
     // Realmインスタンスを取得する
     let realm = try! Realm()
     
@@ -39,6 +31,9 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
     // 以降内容をアップデートするとリスト内は自動的に更新される。
     var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)
     
+    //条件検索　入力された文字とカテゴリ名が一致しているものを取り出す
+    var categoryArray = try! Realm().objects(Task.self).filter("category == 'searchBar.text'")
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,20 +41,23 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
         tableView.delegate = self
         tableView.dataSource = self
         searchBar.delegate = self
-        
         //カテゴリ検索バー
         searchBar.placeholder = "カテゴリ名を入力してください"
-        searchBar.showsSearchResultsButton = false
-        searchBar.showsCancelButton = false
-        
     }
     
     // MARK: UITableViewDataSourceプロトコルのメソッド
     // tableView(_:numberOfRowsInSection:)メソッドは、データの数（＝セルの数）を返すメソッド。
     //データの配列であるtaskArrayの要素数を返す。
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        //タスクの数を返す
-        return taskArray.count
+        
+        //検索バーの文字とカテゴリ名がイコールだったらみたいな式を書きたい
+        if searchBar.text == "" {
+            return categoryArray.count
+        } else {
+            return taskArray.count
+        }
+        
+        
     }
     
     // tableView(_:cellForRowAtIndexPath:)メソッドは各セルの内容を返すメソッド。
@@ -67,18 +65,37 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
         // 再利用可能な cell を得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         
+        //検索バーの文字とカテゴリ名がイコールだったらみたいな式を書きたい
+        if searchBar.text == "" {
+            
+            // Cellにカテゴリ検索用の値を設定する
+            let categoryTask = categoryArray[indexPath.row]
+            cell.textLabel?.text = categoryTask.title
+            
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm"
+            
+            let dateString:String = formatter.string(from: categoryTask.date)
+            cell.detailTextLabel?.text = dateString
+            
+            return cell
+            
+        } else {
+            
+            // Cellに値を設定する.
+            let task = taskArray[indexPath.row] //taskに行を代入。
+            cell.textLabel?.text = task.title   //cellにタイトルを設定。
+            
+            let formatter = DateFormatter()  //日付を表すDateクラスを任意の形の文字列に変換する
+            formatter.dateFormat = "yyyy-MM-dd HH:mm" //どのような文字列にするかを指定
+            
+            let dateString:String = formatter.string(from: task.date) //文字列型に変換
+            cell.detailTextLabel?.text = dateString
+            
+            return cell
+
+        }
         
-        // Cellに値を設定する.
-        let task = taskArray[indexPath.row] //taskに行を代入。
-        cell.textLabel?.text = task.title   //cellにタイトルを設定。
-        
-        let formatter = DateFormatter()  //日付を表すDateクラスを任意の形の文字列に変換する
-        formatter.dateFormat = "yyyy-MM-dd HH:mm" //どのような文字列にするかを指定
-        
-        let dateString:String = formatter.string(from: task.date) //文字列型に変換
-        cell.detailTextLabel?.text = dateString
-        
-        return cell
     }
     
     // MARK: UITableViewDelegateプロトコルのメソッド
@@ -88,8 +105,8 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
         performSegue(withIdentifier: "cellSegue",sender: nil)
     }
     
-    // セルが削除が可能なことを伝えるメソッド
-  //セルが削除が可能かどうか、並び替えが可能かどうかなどどのように編集ができるかを返すメソッド。taskappでは削除を可能にするため、.deleteを返します
+    //セルが削除が可能かどうか、並び替えが可能かどうかなどどのように編集ができるかを返すメソッド。
+    //taskappでは削除を可能にするため、.deleteを返します
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath)-> UITableViewCell.EditingStyle {
         return .delete
     }
