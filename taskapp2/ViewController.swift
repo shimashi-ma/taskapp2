@@ -14,14 +14,6 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     
-    
-    //検索ボタンをクリック（タップ）した時
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
-        // キーボードを閉じる
-        view.endEditing(true)
-    }
-    
-    
     // Realmインスタンスを取得する
     let realm = try! Realm()
     
@@ -31,9 +23,21 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
     // 以降内容をアップデートするとリスト内は自動的に更新される。
     var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)
     
-    //条件検索　入力された文字とカテゴリ名が一致しているものを取り出す
-    var categoryArray = try! Realm().objects(Task.self).filter("category == 'searchBar.text'")
-    
+    //検索ボタンをクリック（タップ）した時
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
+        // キーボードを閉じる
+        view.endEditing(true)
+        
+        if let seachWord = searchBar.text {
+            //デバックに表示
+            print(seachWord)
+            //条件検索　入力された文字とカテゴリ名が一致しているものを取り出す
+            taskArray = try! Realm().objects(Task.self).filter("category.text == 'seachWord'")
+        }
+        //テーブルのリロード
+        tableView.reloadData()
+    }
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -49,15 +53,7 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
     // tableView(_:numberOfRowsInSection:)メソッドは、データの数（＝セルの数）を返すメソッド。
     //データの配列であるtaskArrayの要素数を返す。
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-        //検索バーの文字とカテゴリ名がイコールだったらみたいな式を書きたい
-        if searchBar.text == "" {
-            return categoryArray.count
-        } else {
             return taskArray.count
-        }
-        
-        
     }
     
     // tableView(_:cellForRowAtIndexPath:)メソッドは各セルの内容を返すメソッド。
@@ -65,24 +61,7 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
         // 再利用可能な cell を得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         
-        //検索バーの文字とカテゴリ名がイコールだったらみたいな式を書きたい
-        if searchBar.text == "" {
-            
-            // Cellにカテゴリ検索用の値を設定する
-            let categoryTask = categoryArray[indexPath.row]
-            cell.textLabel?.text = categoryTask.title
-            
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd HH:mm"
-            
-            let dateString:String = formatter.string(from: categoryTask.date)
-            cell.detailTextLabel?.text = dateString
-            
-            return cell
-            
-        } else {
-            
-            // Cellに値を設定する.
+         // Cellに値を設定する.
             let task = taskArray[indexPath.row] //taskに行を代入。
             cell.textLabel?.text = task.title   //cellにタイトルを設定。
             
@@ -94,8 +73,6 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
             
             return cell
 
-        }
-        
     }
     
     // MARK: UITableViewDelegateプロトコルのメソッド
