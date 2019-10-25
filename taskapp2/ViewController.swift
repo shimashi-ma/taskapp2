@@ -28,13 +28,20 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
         // キーボードを閉じる
         view.endEditing(true)
         
+        // if let文　値がある時のみ実行
         if let seachWord = searchBar.text {
             //デバックに表示
             print(seachWord)
             //条件検索　入力された文字とカテゴリ名が一致しているものを取り出す
-            taskArray = try! Realm().objects(Task.self).filter("category.text == 'seachWord'")
+            taskArray = try! Realm().objects(Task.self).filter("category = %@", seachWord)
         }
         //テーブルのリロード
+        tableView.reloadData()
+    }
+    
+    //検索バーのキャンセルボタンをクリック（タップ）した時
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)
         tableView.reloadData()
     }
 
@@ -47,6 +54,7 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
         searchBar.delegate = self
         //カテゴリ検索バー
         searchBar.placeholder = "カテゴリ名を入力してください"
+        searchBar.showsCancelButton = true  //キャンセルボタンを表示しする
     }
     
     // MARK: UITableViewDataSourceプロトコルのメソッド
@@ -72,7 +80,6 @@ class ViewController: UIViewController,UITableViewDelegate, UITableViewDataSourc
             cell.detailTextLabel?.text = dateString
             
             return cell
-
     }
     
     // MARK: UITableViewDelegateプロトコルのメソッド
